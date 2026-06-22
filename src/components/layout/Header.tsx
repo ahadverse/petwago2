@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { ShoppingCart, Menu, X, ChevronDown, Search, User as UserIcon } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -151,8 +151,9 @@ function useSearchSuggestions(query: string) {
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { cartCount } = useCart();
-  const { user, openLoginModal, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
@@ -417,13 +418,13 @@ export default function Header() {
                     )}
                   </button>
                 ) : (
-                  <button
-                    onClick={() => openLoginModal()}
+                  <Link
+                    href={`/login?redirect=${encodeURIComponent(pathname || '/')}`}
                     className='flex items-center justify-center w-9 h-9 rounded-sm text-gray-600 hover:text-sage hover:bg-sage/5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/50'
                     aria-label='Sign in'
                   >
                     <UserIcon className='w-[20px] h-[20px]' aria-hidden='true' />
-                  </button>
+                  </Link>
                 )}
 
                 {accountOpen && user && (

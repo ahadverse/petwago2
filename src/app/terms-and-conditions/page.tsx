@@ -1,4 +1,5 @@
 import PageHeader from '@/components/category/PageHeader';
+import { businessInfo } from '@/lib/businessInfo';
 
 export const metadata = { title: 'Terms and Conditions — PetWago' };
 
@@ -27,7 +28,10 @@ export default function TermsPage() {
             </Section>
 
             <Section title="4. Orders and Payment">
-              By placing an order through PetWago.com, you are making an offer to purchase the goods in your cart. We reserve the right to accept or decline your order for any reason, including but not limited to availability issues, errors in product or pricing information, or identification of fraudulent activity. Payment must be made in full at the time of ordering. We accept Visa, MasterCard, American Express, and PayPal.
+              By placing an order through PetWago.com, you are making an offer to purchase the goods in your cart. We reserve the right to accept or decline your order for any reason, including but not limited to availability issues, errors in product or pricing information, or identification of fraudulent activity. Payment must be made in full at the time of ordering. We accept Visa, MasterCard, American Express, PayPal, Apple Pay, and Google Pay. All payments are processed securely by{' '}
+              <a href="https://stripe.com/legal" target="_blank" rel="noopener noreferrer" className="text-sage hover:text-sage-dark hover:underline">Stripe, Inc.</a>,
+              {' '}a third-party payment processor. By making a purchase, you also agree to be bound by{' '}
+              <a href="https://stripe.com/legal/consumer" target="_blank" rel="noopener noreferrer" className="text-sage hover:text-sage-dark hover:underline">Stripe&apos;s Services Agreement</a>. PetWago.com does not store your full payment card details on its servers.
             </Section>
 
             <Section title="5. Pricing and Taxes">
@@ -59,16 +63,18 @@ export default function TermsPage() {
             </Section>
 
             <Section title="12. Governing Law">
-              These Terms and Conditions shall be governed by and construed in accordance with the laws of the State of New York, United States, without regard to its conflict of law provisions. Any disputes arising under these terms shall be subject to the exclusive jurisdiction of the state and federal courts located in New York County, New York.
+              These Terms and Conditions shall be governed by and construed in accordance with the laws of {businessInfo.governingLaw}, without regard to its conflict of law provisions. Any disputes arising under these terms shall be subject to the exclusive jurisdiction of the state and federal courts located in New York County, New York.
             </Section>
 
             <Section title="13. Contact Information">
-              If you have any questions about these Terms and Conditions, please contact us:
-              <br /><br />
-              <strong>PetWago.com</strong><br />
-              Email: <a href="mailto:support@petwago.com" className="text-sage hover:text-sage-dark hover:underline">support@petwago.com</a><br />
-              Phone: 1-800-PETWAGO<br />
-              Address: 123 Pet Lane, New York, NY 10001
+              <>
+                If you have any questions about these Terms and Conditions, please contact us:
+                <br /><br />
+                <strong>{businessInfo.legalName}</strong><br />
+                Email: <a href={`mailto:${businessInfo.supportEmail}`} className="text-sage hover:text-sage-dark hover:underline">{businessInfo.supportEmail}</a><br />
+                Phone: {businessInfo.supportPhone}<br />
+                Address: {businessInfo.address}
+              </>
             </Section>
           </div>
         </div>

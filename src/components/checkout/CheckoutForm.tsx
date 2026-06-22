@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
 
 interface CheckoutFormProps {
@@ -16,6 +17,7 @@ export default function CheckoutForm({ onBack, paymentIntentId, orderNumber }: C
   const stripe = useStripe();
   const elements = useElements();
   const { cartTotal, clearCart } = useCart();
+  const { clearGuestUser } = useAuth();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export default function CheckoutForm({ onBack, paymentIntentId, orderNumber }: C
         body: JSON.stringify({ status: paymentIntent.status === 'succeeded' ? 'paid' : 'processing' }),
       });
       clearCart();
+      clearGuestUser();
       router.push(`/thank-you?status=success&order=${orderNumber}`);
     } else {
       setIsProcessing(false);

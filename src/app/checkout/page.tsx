@@ -38,10 +38,39 @@ function Input({ label, ...props }: { label: string } & React.InputHTMLAttribute
   );
 }
 
+function AccordionSection({ number, title, icon, status, onEdit, children }: {
+  number: number;
+  title: string;
+  icon: React.ReactNode;
+  status: 'active' | 'done' | 'upcoming';
+  onEdit?: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-sm border border-border overflow-hidden">
+      <div className={`flex items-center justify-between px-6 py-4 ${status !== 'upcoming' ? 'border-b border-border' : ''}`}>
+        <h2 className={`font-serif font-bold flex items-center gap-2 ${status === 'upcoming' ? 'text-muted' : 'text-charcoal'}`}>
+          <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold flex-shrink-0 ${status === 'upcoming' ? 'bg-cream-warm text-muted' : 'bg-sage text-cream'}`}>
+            {number}
+          </span>
+          {icon}
+          {title}
+        </h2>
+        {status === 'done' && onEdit && (
+          <button onClick={onEdit} className="text-xs font-semibold text-sage hover:underline cursor-pointer">
+            Edit
+          </button>
+        )}
+      </div>
+      {status !== 'upcoming' && <div className="p-6">{children}</div>}
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, cartTotal } = useCart();
-  const { user, loading: authLoading, openLoginModal } = useAuth();
+  const { user, guestUser, loading: authLoading } = useAuth();
   const [form, setForm] = useState<FormData>(INITIAL);
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [step, setStep] = useState<1 | 2>(1);
@@ -52,9 +81,14 @@ export default function CheckoutPage() {
   const shipping = cartTotal >= 49 ? 0 : 6.99;
   const total = cartTotal + shipping;
 
+  const prefillEmail = user?.email ?? guestUser?.email ?? '';
+  const effectiveForm: FormData = { ...form, email: form.email || prefillEmail };
+
   useEffect(() => {
-    if (!authLoading && !user) openLoginModal();
-  }, [authLoading, user, openLoginModal]);
+    if (!authLoading && !user && !guestUser) {
+      router.replace('/login?redirect=/checkout');
+    }
+  }, [authLoading, user, guestUser, router]);
 
   const set = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm(f => ({ ...f, [field]: e.target.value }));
@@ -64,8 +98,8 @@ export default function CheckoutPage() {
   const validate = () => {
     const required: (keyof FormData)[] = ['firstName','lastName','email','phone','address','city','state','zip','country'];
     const errs: Partial<FormData> = {};
-    required.forEach(k => { if (!form[k].trim()) errs[k] = 'Required'; });
-    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Invalid email';
+    required.forEach(k => { if (!effectiveForm[k].trim()) errs[k] = 'Required'; });
+    if (effectiveForm.email && !/\S+@\S+\.\S+/.test(effectiveForm.email)) errs.email = 'Invalid email';
     return errs;
   };
 
@@ -95,16 +129,17 @@ export default function CheckoutPage() {
             quantity: i.quantity,
           })),
           shipping: {
-            email: form.email,
-            firstName: form.firstName,
-            lastName: form.lastName,
-            phone: form.phone,
-            address: form.address,
-            city: form.city,
-            state: form.state,
-            zip: form.zip,
-            country: form.country,
+            email: effectiveForm.email,
+            firstName: effectiveForm.firstName,
+            lastName: effectiveForm.lastName,
+            phone: effectiveForm.phone,
+            address: effectiveForm.address,
+            city: effectiveForm.city,
+            state: effectiveForm.state,
+            zip: effectiveForm.zip,
+            country: effectiveForm.country,
           },
+          guestUserId: !user ? guestUser?.id : undefined,
         }),
       });
       const data = await res.json();
@@ -135,6 +170,20 @@ export default function CheckoutPage() {
     );
   }
 
+  if (authLoading || (!user && !guestUser)) {
+    return (
+      <main>
+        <PageHeader
+          title="Secure Checkout"
+          breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Cart', href: '/cart' }, { label: 'Checkout' }]}
+        />
+        <div className="bg-cream min-h-screen flex items-center justify-center">
+          <p className="text-sm text-muted">Loading…</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main>
       <PageHeader
@@ -147,16 +196,21 @@ export default function CheckoutPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid lg:grid-cols-3 gap-8 items-start">
         {/* Form */}
-        <div className="lg:col-span-2 space-y-8 order-2 lg:order-1">
-          {/* Delivery */}
-          {step === 1 && (
-            <form onSubmit={handleContinue} className="space-y-8">
-              <div className="bg-white rounded-sm border border-border p-6">
-                <h2 className="font-serif font-bold text-charcoal mb-5 flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-sage" /> Delivery Information</h2>
+        <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+          {/* Shipping */}
+          <AccordionSection
+            number={1}
+            title="Shipping"
+            icon={<ShoppingBag className="w-5 h-5 text-sage" />}
+            status={step === 1 ? 'active' : 'done'}
+            onEdit={() => setStep(1)}
+          >
+            {step === 1 ? (
+              <form onSubmit={handleContinue} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Input label="First Name *" placeholder="John" value={form.firstName} onChange={set('firstName')} />
                   <Input label="Last Name *" placeholder="Smith" value={form.lastName} onChange={set('lastName')} />
-                  <Input label="Email Address *" type="email" placeholder="john@example.com" value={form.email} onChange={set('email')} className={errors.email ? 'border-red-400' : ''} />
+                  <Input label="Email Address *" type="email" placeholder="john@example.com" value={effectiveForm.email} onChange={set('email')} className={errors.email ? 'border-red-400' : ''} />
                   <Input label="Phone Number *" type="tel" placeholder="+1 (555) 000-0000" value={form.phone} onChange={set('phone')} />
                   <div className="sm:col-span-2">
                     <Input label="Street Address *" placeholder="123 Main Street, Apt 4B" value={form.address} onChange={set('address')} />
@@ -172,38 +226,36 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 {Object.values(errors).some(Boolean) && (
-                  <p className="text-red-500 text-sm mt-3">Please fill in all required fields.</p>
+                  <p className="text-red-500 text-sm">Please fill in all required fields.</p>
                 )}
-              </div>
 
-              <Button type="submit" size="lg" fullWidth>
-                Continue to Payment
-              </Button>
-            </form>
-          )}
+                <Button type="submit" size="lg" fullWidth>
+                  Save and Continue
+                </Button>
+              </form>
+            ) : (
+              <div className="text-sm space-y-1">
+                <p className="font-semibold text-foreground">{effectiveForm.firstName} {effectiveForm.lastName}</p>
+                <p className="text-muted">{effectiveForm.address}, {effectiveForm.city}, {effectiveForm.state} {effectiveForm.zip}, {effectiveForm.country}</p>
+                <p className="text-muted">{effectiveForm.email} · {effectiveForm.phone}</p>
+              </div>
+            )}
+          </AccordionSection>
 
           {/* Payment */}
-          {step === 2 && (
-            <div className="bg-white rounded-sm border border-border p-6">
-              <h2 className="font-serif font-bold text-charcoal mb-5 flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-sage" /> Payment
-              </h2>
-
-              {user ? (
-                <PaymentForm
-                  clientSecret={paymentSession?.clientSecret ?? null}
-                  orderNumber={paymentSession?.orderNumber ?? null}
-                  error={paymentError}
-                  onBack={() => setStep(1)}
-                />
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted">Please sign in to continue.</p>
-                  <Button onClick={() => openLoginModal()}>Sign In</Button>
-                </div>
-              )}
-            </div>
-          )}
+          <AccordionSection
+            number={2}
+            title="Payment"
+            icon={<CreditCard className="w-5 h-5 text-sage" />}
+            status={step === 2 ? 'active' : 'upcoming'}
+          >
+            <PaymentForm
+              clientSecret={paymentSession?.clientSecret ?? null}
+              orderNumber={paymentSession?.orderNumber ?? null}
+              error={paymentError}
+              onBack={() => setStep(1)}
+            />
+          </AccordionSection>
         </div>
 
         {/* Order summary sidebar */}

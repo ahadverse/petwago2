@@ -4,6 +4,7 @@ import { connectDB } from '@petbackend/db';
 import { auth } from '@/auth';
 import { Order } from '@petbackend/models/Order';
 import { Transaction } from '@petbackend/models/Transaction';
+import User from '@petbackend/models/User';
 
 interface IncomingItem {
   productId: string;
@@ -34,17 +35,28 @@ function generateOrderNumber(): string {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'You must be signed in to checkout' }, { status: 401 });
-    }
 
-    const { amount, subtotal, shippingCost, items, shipping } = (await request.json()) as {
+    const { amount, subtotal, shippingCost, items, shipping, guestUserId } = (await request.json()) as {
       amount?: number;
       subtotal?: number;
       shippingCost?: number;
       items?: IncomingItem[];
       shipping?: IncomingShipping;
+      guestUserId?: string;
     };
+
+    let userId = session?.user?.id;
+    if (!userId) {
+      if (!guestUserId) {
+        return NextResponse.json({ error: 'You must be signed in to checkout' }, { status: 401 });
+      }
+      await connectDB();
+      const guestUser = await User.findById(guestUserId);
+      if (!guestUser) {
+        return NextResponse.json({ error: 'You must be signed in to checkout' }, { status: 401 });
+      }
+      userId = guestUser._id.toString();
+    }
 
     if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
@@ -90,7 +102,7 @@ export async function POST(request: NextRequest) {
       subtotal: subtotal ?? amount,
       shipping: shippingCost ?? 0,
       total: amount,
-      user: session.user.id,
+      user: userId,
       paymentIntentId: paymentIntent.id,
       paymentStatus: 'pending',
     });

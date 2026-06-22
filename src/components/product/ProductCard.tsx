@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Check, ShoppingCart } from 'lucide-react';
-import { useState } from 'react';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
 import StarRating from '@/components/ui/StarRating';
@@ -11,15 +11,14 @@ import Badge from '@/components/ui/Badge';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart, isInCart } = useCart();
-  const [justAdded, setJustAdded] = useState(false);
+  const router = useRouter();
   const inCart = isInCart(product.id);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!product.inStock) return;
     addToCart(product);
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1500);
+    router.push('/cart');
   };
 
   return (
@@ -95,8 +94,8 @@ export default function ProductCard({ product }: { product: Product }) {
           aria-label={
             !product.inStock
               ? 'Out of stock'
-              : inCart || justAdded
-              ? 'Already in cart'
+              : inCart
+              ? 'Already in cart, go to cart'
               : `Add ${product.name} to cart`
           }
           className={`
@@ -104,18 +103,13 @@ export default function ProductCard({ product }: { product: Product }) {
             py-2.5 rounded-sm text-sm font-bold border
             transition-colors duration-150 cursor-pointer
             disabled:opacity-40 disabled:cursor-not-allowed
-            ${justAdded || inCart
+            ${inCart
               ? 'border-emerald-500 text-emerald-600 bg-emerald-50'
               : 'border-charcoal text-charcoal hover:bg-charcoal hover:text-cream'
             }
           `}
         >
-          {justAdded ? (
-            <>
-              <Check className="w-4 h-4 shrink-0" />
-              Added!
-            </>
-          ) : inCart ? (
+          {inCart ? (
             <>
               <Check className="w-4 h-4 shrink-0" />
               In Cart

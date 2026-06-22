@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import CartItemRow from '@/components/cart/CartItem';
 import CartSummary from '@/components/cart/CartSummary';
@@ -12,7 +12,6 @@ export default function CartPage() {
 
   return (
     <main>
-      {/* Dark brown header */}
       <PageHeader
         title="Your Cart"
         subtitle={items.length > 0 ? `${items.length} item${items.length !== 1 ? 's' : ''} in your cart` : 'Your cart is empty'}
@@ -44,7 +43,9 @@ export default function CartPage() {
               <div className="lg:col-span-2">
                 <div className="bg-white border border-border rounded-sm overflow-hidden">
                   <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <h2 className="font-serif font-bold text-charcoal">Order Items</h2>
+                    <h2 className="font-serif font-bold text-charcoal flex items-center gap-2">
+                      <ShoppingBag className="w-5 h-5 text-sage" /> Order Items
+                    </h2>
                     <button onClick={clearCart} className="text-xs text-muted hover:text-red-500 transition-colors font-medium">
                       Clear all
                     </button>

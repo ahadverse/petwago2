@@ -4,7 +4,11 @@ export const ADMIN_SESSION_COOKIE = 'mmpm_admin_session';
 const SESSION_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 function getSessionSecret(): string {
-  return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_PASSWORD || 'mmpetmart-dev-secret';
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) {
+    throw new Error('ADMIN_SESSION_SECRET environment variable is not set');
+  }
+  return secret;
 }
 
 function sign(value: string): string {
@@ -35,5 +39,9 @@ export function verifySessionToken(token: string | undefined | null): boolean {
 }
 
 export function getAdminPassword(): string {
-  return process.env.ADMIN_PASSWORD || 'admin123';
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) {
+    throw new Error('ADMIN_PASSWORD environment variable is not set');
+  }
+  return password;
 }

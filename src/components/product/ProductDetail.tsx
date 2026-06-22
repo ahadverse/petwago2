@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { ShoppingCart, Check, Truck, RotateCcw, Shield, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart, Truck, RotateCcw, Shield, Star } from 'lucide-react';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
 import Badge from '@/components/ui/Badge';
@@ -13,14 +14,13 @@ import ProductCard from './ProductCard';
 
 export default function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const { addToCart, isInCart } = useCart();
+  const router = useRouter();
   const [qty, setQty] = useState(1);
-  const [added, setAdded] = useState(false);
   const inCart = isInCart(product.id);
 
   const handleAdd = () => {
     addToCart(product, qty);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    router.push('/cart');
   };
 
   const displayPrice = product.priceLabel
@@ -99,16 +99,15 @@ export default function ProductDetail({ product, related }: { product: Product; 
                 onClick={handleAdd}
                 size="lg"
                 className="flex-1"
-                variant={added ? 'secondary' : 'primary'}
               >
-                {added ? <><Check className="w-5 h-5" /> Added to Cart!</> : <><ShoppingCart className="w-5 h-5" /> {inCart ? 'Add More' : 'Add to Cart'}</>}
+                <ShoppingCart className="w-5 h-5" /> {inCart ? 'Add More' : 'Add to Cart'}
               </Button>
             </div>
           ) : (
             <div className="bg-gray-100 text-gray-500 rounded-sm px-6 py-3 text-center font-medium">Out of Stock</div>
           )}
 
-          {inCart && !added && (
+          {inCart && (
             <Link href="/cart" className="text-center text-sage text-sm font-semibold hover:underline">
               View Cart →
             </Link>

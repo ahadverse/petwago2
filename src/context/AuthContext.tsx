@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SessionProvider, useSession, signOut } from 'next-auth/react';
 
 export interface AuthUser {
@@ -10,20 +10,54 @@ export interface AuthUser {
   image?: string | null;
 }
 
+export interface GuestUser {
+  id: string;
+  email: string;
+}
+
+const GUEST_STORAGE_KEY = 'petwago_guest_user';
+
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   logout: () => Promise<void>;
-  isLoginModalOpen: boolean;
-  openLoginModal: () => void;
-  closeLoginModal: () => void;
+  guestUser: GuestUser | null;
+  setGuestUser: (user: GuestUser) => void;
+  clearGuestUser: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 function AuthState({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [guestUser, setGuestUserState] = useState<GuestUser | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(GUEST_STORAGE_KEY);
+      if (stored) setGuestUserState(JSON.parse(stored));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const setGuestUser = (guest: GuestUser) => {
+    setGuestUserState(guest);
+    try {
+      sessionStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(guest));
+    } catch {
+      // ignore
+    }
+  };
+
+  const clearGuestUser = () => {
+    setGuestUserState(null);
+    try {
+      sessionStorage.removeItem(GUEST_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  };
 
   const user: AuthUser | null = session?.user
     ? {
@@ -40,9 +74,9 @@ function AuthState({ children }: { children: ReactNode }) {
         user,
         loading: status === 'loading',
         logout: () => signOut(),
-        isLoginModalOpen,
-        openLoginModal: () => setIsLoginModalOpen(true),
-        closeLoginModal: () => setIsLoginModalOpen(false),
+        guestUser,
+        setGuestUser,
+        clearGuestUser,
       }}
     >
       {children}

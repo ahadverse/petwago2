@@ -12,8 +12,8 @@ export default function CartItemRow({ item }: { item: CartItemType }) {
   return (
     <div className="flex gap-4 py-5 border-b border-border last:border-0">
       {/* Image */}
-      <Link href={`/products/${item.product.slug}`} className="relative w-20 h-20 flex-shrink-0 rounded-sm overflow-hidden bg-cream-warm border border-border">
-        <Image src={item.product.image} alt={item.product.name} fill className="object-cover" sizes="80px" />
+      <Link href={`/products/${item.product.slug}`} className="relative w-24 h-24 flex-shrink-0 rounded-sm overflow-hidden bg-cream-warm border border-border">
+        <Image src={item.product.image} alt={item.product.name} fill className="object-cover" sizes="96px" />
       </Link>
 
       {/* Details */}
