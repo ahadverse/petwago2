@@ -187,10 +187,6 @@ export default function Footer() {
               ))}
             </div>
           </div>
-          <div className='flex items-center gap-2 text-xs text-cream/40'>
-            <FaCcStripe className='w-7 h-7 text-cream/50' aria-hidden='true' />
-            <span>Secured by Stripe</span>
-          </div>
         </div>
       </div>
 
